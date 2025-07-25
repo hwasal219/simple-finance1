@@ -2,8 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>シンプル収支帳</title>
+  <title>ファルの収支帳</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.png" />
+  <meta name="theme-color" content="#2196f3" />
   <style>
     body { padding: 16px; font-family: sans-serif; max-width: 700px; margin: auto; }
     input, button { font-size: 1rem; margin: 4px; padding: 6px; }
@@ -18,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h1>シンプル収支帳</h1>
+  <h1>ファルの収支帳</h1>
   <div>
     <input type="date" id="d" />
     <input list="items" id="i" placeholder="項目" />
@@ -61,7 +64,6 @@
       tbody.innerHTML = '';
       entries.forEach((e, index) => {
         const tr = document.createElement('tr');
-
         if (e.editing) {
           tr.innerHTML = `
             <td><input type="date" value="${e.date}" id="edit-date-${index}"></td>
@@ -72,8 +74,7 @@
             <td>
               <button class="save-btn" onclick="saveEdit(${index})">保存</button>
               <button class="cancel-btn" onclick="cancelEdit(${index})">取消</button>
-            </td>
-          `;
+            </td>`;
         } else {
           tr.innerHTML = `
             <td>${e.date}</td>
@@ -84,13 +85,10 @@
             <td>
               <button class="edit-btn" onclick="editEntry(${index})">修正</button>
               <button class="delete-btn" onclick="deleteEntry(${index})">削除</button>
-            </td>
-          `;
+            </td>`;
         }
-
         tbody.appendChild(tr);
       });
-
       itemsList.innerHTML = '';
       itemHistory.forEach(h => {
         const opt = document.createElement('option');
@@ -144,6 +142,10 @@
 
     saveAndRender();
   </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').catch(console.error);
+    }
+  </script>
 </body>
 </html>
-
