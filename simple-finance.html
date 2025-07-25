@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>シンプル収支帳</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { padding: 16px; font-family: sans-serif; max-width: 600px; margin: auto; }
+    input, button { font-size: 1rem; margin: 4px; padding: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>シンプル収支帳</h1>
+  <div>
+    <input type="date" id="d" />
+    <input list="items" id="i" placeholder="項目" />
+    <datalist id="items"></datalist>
+    <input type="number" id="inc" placeholder="収入" />
+    <input type="number" id="exp" placeholder="支出" />
+    <button id="btn">登録</button>
+  </div>
+  <table>
+    <thead>
+      <tr><th>日付</th><th>項目</th><th>収入</th><th>支出</th><th>残高</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <script>
+    const d = document.getElementById('d');
+    const i = document.getElementById('i');
+    const inc = document.getElementById('inc');
+    const exp = document.getElementById('exp');
+    const btn = document.getElementById('btn');
+    const tbody = document.getElementById('tbody');
+    const itemsList = document.getElementById('items');
+
+    d.value = new Date().toISOString().slice(0,10);
+
+    let entries = JSON.parse(localStorage.getItem('entries') || '[]');
+    let itemHistory = JSON.parse(localStorage.getItem('itemHistory') || '[]');
+
+    function render() {
+      tbody.innerHTML = '';
+      entries.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${e.date}</td><td>${e.item}</td><td>${e.income ? e.income.toLocaleString() : ''}</td><td>${e.expense ? e.expense.toLocaleString() : ''}</td><td><b>${e.balance.toLocaleString()}</b></td>`;
+        tbody.appendChild(tr);
+      });
+      itemsList.innerHTML = '';
+      itemHistory.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h;
+        itemsList.appendChild(opt);
+      });
+    }
+
+    btn.onclick = () => {
+      if (!i.value || (!inc.value && !exp.value)) return;
+      const amountIn = parseFloat(inc.value) || 0;
+      const amountOut = parseFloat(exp.value) || 0;
+      const last = entries.length ? entries[entries.length-1].balance : 0;
+      const bal = last + amountIn - amountOut;
+      const e = { date: d.value, item: i.value, income: amountIn, expense: amountOut, balance: bal };
+      entries.push(e);
+      localStorage.setItem('entries', JSON.stringify(entries));
+      if (!itemHistory.includes(i.value)) {
+        itemHistory.push(i.value);
+        localStorage.setItem('itemHistory', JSON.stringify(itemHistory));
+      }
+      i.value = ''; inc.value = ''; exp.value = '';
+      render();
+    };
+
+    render();
+  </script>
+</body>
+</html>
