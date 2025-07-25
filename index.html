@@ -11,6 +11,7 @@
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
     th { background: #f0f0f0; }
     button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .delete-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -25,7 +26,7 @@
   </div>
   <table>
     <thead>
-      <tr><th>日付</th><th>項目</th><th>収入</th><th>支出</th><th>残高</th></tr>
+      <tr><th>日付</th><th>項目</th><th>収入</th><th>支出</th><th>残高</th><th>操作</th></tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
@@ -44,13 +45,32 @@
     let entries = JSON.parse(localStorage.getItem('entries') || '[]');
     let itemHistory = JSON.parse(localStorage.getItem('itemHistory') || '[]');
 
+    function saveAndRender() {
+      // 再計算して保存
+      let balance = 0;
+      entries.forEach(e => {
+        balance += e.income - e.expense;
+        e.balance = balance;
+      });
+      localStorage.setItem('entries', JSON.stringify(entries));
+      render();
+    }
+
     function render() {
       tbody.innerHTML = '';
-      entries.forEach(e => {
+      entries.forEach((e, index) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${e.date}</td><td>${e.item}</td><td>${e.income ? e.income.toLocaleString() : ''}</td><td>${e.expense ? e.expense.toLocaleString() : ''}</td><td><b>${e.balance.toLocaleString()}</b></td>`;
+        tr.innerHTML = `
+          <td>${e.date}</td>
+          <td>${e.item}</td>
+          <td>${e.income ? e.income.toLocaleString() : ''}</td>
+          <td>${e.expense ? e.expense.toLocaleString() : ''}</td>
+          <td><b>${e.balance.toLocaleString()}</b></td>
+          <td><button class="delete-btn" onclick="deleteEntry(${index})">削除</button></td>
+        `;
         tbody.appendChild(tr);
       });
+
       itemsList.innerHTML = '';
       itemHistory.forEach(h => {
         const opt = document.createElement('option');
@@ -59,24 +79,27 @@
       });
     }
 
+    function deleteEntry(index) {
+      if (!confirm('この記録を削除しますか？')) return;
+      entries.splice(index, 1);
+      saveAndRender();
+    }
+
     btn.onclick = () => {
       if (!i.value || (!inc.value && !exp.value)) return;
       const amountIn = parseFloat(inc.value) || 0;
       const amountOut = parseFloat(exp.value) || 0;
-      const last = entries.length ? entries[entries.length-1].balance : 0;
-      const bal = last + amountIn - amountOut;
-      const e = { date: d.value, item: i.value, income: amountIn, expense: amountOut, balance: bal };
+      const e = { date: d.value, item: i.value, income: amountIn, expense: amountOut, balance: 0 };
       entries.push(e);
-      localStorage.setItem('entries', JSON.stringify(entries));
       if (!itemHistory.includes(i.value)) {
         itemHistory.push(i.value);
         localStorage.setItem('itemHistory', JSON.stringify(itemHistory));
       }
       i.value = ''; inc.value = ''; exp.value = '';
-      render();
+      saveAndRender();
     };
 
-    render();
+    saveAndRender();
   </script>
 </body>
 </html>
